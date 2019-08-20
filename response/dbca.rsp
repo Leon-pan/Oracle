@@ -416,8 +416,8 @@ SYSTEMPASSWORD = "1q2w3e4r"
 # Default value : "US7ASCII"
 # Mandatory     : NO
 #-----------------------------------------------------------------------------
-#mark	AL32UTF8
-CHARACTERSET = "ZHS16GBK"
+#mark	ZHS16GBK可选，推荐使用AL32UTF8
+CHARACTERSET = "AL32UTF8"
 
 #-----------------------------------------------------------------------------
 # Name          : NATIONALCHARACTERSET

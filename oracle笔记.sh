@@ -38,17 +38,17 @@ echo -e 'oracle　　　　　soft     nproc    2047\noracle              hard  
 
 
 #7.创建oracle安装目录
-mkdir -p /u01/oracle_11/app/
-mkdir -p /u01/oracle_11/oraInventory/
-chown -R oracle:oinstall /u01/oracle_11/app/
-chmod -R 775 /u01/oracle_11/app/
-chown -R oracle:oinstall /u01/oracle_11/oraInventory/
-chmod -R 775 /u01/oracle_11/oraInventory/
+mkdir -p /u01/app/
+mkdir -p /u01/app/oraInventory/
+chown -R oracle:oinstall /u01/app/
+chmod -R 775 /u01/app/
+chown -R oracle:oinstall /u01/app/oraInventory/
+chmod -R 775 /u01/app/oraInventory/
 
 
 
 #8.修改环境变量,ORACLE_SID根据需要更改！！！
-echo -e 'export ORACLE_BASE=/u01/oracle_11/app/oracle\nexport ORACLE_SID=orcl\nexport ORACLE_HOME=$ORACLE_BASE/product/11.2.0/dbhome_1\nexport SQLPATH=/u01/oracle/labs\nexport PATH=$ORACLE_HOME/bin:$PATH' >> /u01/oracle/.bash_profile
+echo -e 'export ORACLE_BASE=/u01/app/oracle\nexport ORACLE_SID=orcl\nexport ORACLE_HOME=$ORACLE_BASE/product/11.2.0/dbhome_1\nexport SQLPATH=/u01/oracle/labs\nexport PATH=$ORACLE_HOME/bin:$PATH' >> /u01/oracle/.bash_profile
 source /u01/oracle/.bash_profile
 
 echo -e 'session required /lib64/security/pam_limits.so\nsession required pam_limits.so' >> /etc/pam.d/login
@@ -81,8 +81,8 @@ su - oracle
 cd /u01/oracle/database
 ./runInstaller -silent -responseFile /u01/oracle/response/db_install.rsp
 #当安装界面出现如下信息的时候，打开另一个终端窗口以root执行下面的脚本
-/u01/oracle_11/oraInventory/orainstRoot.sh
-/u01/oracle_11/app/oracle/product/11.2.0/dbhome_1/root.sh
+/u01/app/oraInventory/orainstRoot.sh
+/u01/app/oracle/product/11.2.0/dbhome_1/root.sh
 #执行完上面的脚本后回到安装终端窗口按下Enter键以继续
 
 
@@ -99,8 +99,8 @@ dbca -silent -responseFile /u01/oracle/response/dbca.rsp
 
 #14.主库dataguard配置
 #注意实例名不同，路径也不同
-mkdir -p /u01/oracle_11/app/oracle/oradata/orcl/redo
-mkdir -p /u01/oracle_11/app/oracle/oradata/orcl/datafile
+mkdir -p /u01/app/oracle/oradata/orcl/redo
+mkdir -p /u01/app/oracle/oradata/orcl/datafile
 
 #su  - oracle
 
@@ -135,9 +135,9 @@ SQL>select thread#,group#,members,bytes/1024/1024 from v$log;
 
 #创建同样数量和大小的standby logfile
 #注意实例名不同，路径也不同
-SQL>alter database add standby logfile group 11('/u01/oracle_11/app/oracle/oradata/orcl/redo/redo11_stb01.log') size 50M;
-SQL>alter database add standby logfile group 12('/u01/oracle_11/app/oracle/oradata/orcl/redo/redo12_stb01.log') size 50M;
-SQL>alter database add standby logfile group 13 ('/u01/oracle_11/app/oracle/oradata/orcl/redo/redo13_stb01.log')size 50M;
+SQL>alter database add standby logfile group 11('/u01/app/oracle/oradata/orcl/redo/redo11_stb01.log') size 50M;
+SQL>alter database add standby logfile group 12('/u01/app/oracle/oradata/orcl/redo/redo12_stb01.log') size 50M;
+SQL>alter database add standby logfile group 13 ('/u01/app/oracle/oradata/orcl/redo/redo13_stb01.log')size 50M;
 
 #检查是否创建成功
 SQL>select group#,thread#,sequence#,archived,status from v$standby_log;
@@ -156,7 +156,7 @@ SQL>alter system set log_archive_config='dg_config=(orcl,orcls)' scope=spfile;
 
 #设置归档日志的存放位置
 #注意实例名不同，路径也不同，db_unique_name写的是show parameter db_unique_name查询到的结果
-SQL>alter system set log_archive_dest_1='location=/u01/oracle_11/app/oracle/oradata/orcl/archivelog valid_for=(all_logfiles,all_roles) db_unique_name=orcl' scope=spfile;
+SQL>alter system set log_archive_dest_1='location=/u01/app/oracle/oradata/orcl/archivelog valid_for=(all_logfiles,all_roles) db_unique_name=orcl' scope=spfile;
 #第一个ocrls是备库tnsname.ora的连接名，第二个ocrls是备库的DB_UNIQUE_NAME
 SQL>alter system set log_archive_dest_2='SERVICE=orcls ASYNC VALID_FOR=(ONLINE_LOGFILES,PRIMARY_ROLE) DB_UNIQUE_NAME=orcls' scope=spfile;
 
@@ -175,11 +175,11 @@ SQL>alter system set standby_file_management=auto scope=spfile;
 
 #启用Oracle_Managed Files文件管理功能
 #注意SID不同，路径也不同
-SQL>alter system set db_create_file_dest='/u01/oracle_11/app/oracle/oradata/orcl/datafile' scope=spfile;
+SQL>alter system set db_create_file_dest='/u01/app/oracle/oradata/orcl/datafile' scope=spfile;
 
 #如果主备库文件的存放路径不同，还需要设置以下两个参数，相同则不需（这步路径的先后顺序在主备库上的设置是不同的）
-#SQL>alter system set db_file_name_convert='/u01/oracle_11/app/oracle/oradata/orcls/datafile','/u01/oracle_11/app/oracle/oradata/orcl/datafile','/u01/oracle_11/app/oracle/oradata/orcls/tempfile','/u01/oracle_11/app/oracle/oradata/orcl/tempfile' scope=spfile;
-#SQL>alter system set log_file_name_convert='/u01/oracle_11/app/oracle/oradata/orcls/redo','/u01/oracle_11/app/oracle/oradata/orcl/redo' scope=spfile;
+#SQL>alter system set db_file_name_convert='/u01/app/oracle/oradata/orcls/datafile','/u01/app/oracle/oradata/orcl/datafile','/u01/app/oracle/oradata/orcls/tempfile','/u01/app/oracle/oradata/orcl/tempfile' scope=spfile;
+#SQL>alter system set log_file_name_convert='/u01/app/oracle/oradata/orcls/redo','/u01/app/oracle/oradata/orcl/redo' scope=spfile;
 
 #生成配置文件
 SQL>create pfile from spfile;
@@ -191,8 +191,8 @@ SQL>create pfile from spfile;
 #su - oracle
 
 #将主库的密码文件传输给备库，删除备库原有的密码文件，将新传的文件重命名为删除的密码文件
-cd /u01/oracle_11/app/oracle/product/11.2.0/dbhome_1/dbs
-scp orapworcl 10.1.20.124:/u01/oracle_11/app/oracle/product/11.2.0/dbhome_1/dbs/
+cd /u01/app/oracle/product/11.2.0/dbhome_1/dbs
+scp orapworcl 10.1.20.124:/u01/app/oracle/product/11.2.0/dbhome_1/dbs/
 
 #这步主库备库都需要配置，两边所配置的HOST、GLOBAL_DBNAME、SID_NAME、SERVICE_NAME等是不同的
 cd $ORACLE_HOME/network/admin
@@ -208,13 +208,13 @@ LISTENER =
     )
   )
 
-ADR_BASE_LISTENER = /u01/oracle_11/app/oracle
+ADR_BASE_LISTENER = /u01/app/oracle
 
 SID_LIST_LISTENER=
   (SID_LIST =
     (SID_DESC =
       (GLOBAL_DBNAME = orcl)
-      (ORACLE_HOME = /u01/oracle_11/app/oracle/product/11.2.0/dbhome_1)
+      (ORACLE_HOME = /u01/app/oracle/product/11.2.0/dbhome_1)
       (SID_NAME = orcl)
     )
   )
@@ -250,13 +250,13 @@ $tnsping orcls
 #备库需要创建的文件目录
 mkdir -p $ORACLE_BASE/admin/orcls/adump
 mkdir -p $ORACLE_BASE/admin/orcls/dpdump
-mkdir -p /u01/oracle_11/app/oracle/oradata/orcls/redo
-mkdir -p /u01/oracle_11/app/oracle/oradata/orcls/datafile/
-mkdir -p /u01/oracle_11/app/oracle/oradata/orcls/control/
-mkdir -p /u01/oracle_11/app/oracle/flash_recovery_area/orcls/control
-mkdir -p /u01/oracle_11/app/oracle/flash_recovery_area/ORCLS/onlinelog/
+mkdir -p /u01/app/oracle/oradata/orcls/redo
+mkdir -p /u01/app/oracle/oradata/orcls/datafile/
+mkdir -p /u01/app/oracle/oradata/orcls/control/
+mkdir -p /u01/app/oracle/flash_recovery_area/orcls/control
+mkdir -p /u01/app/oracle/flash_recovery_area/ORCLS/onlinelog/
 
-#备库使用主库经修改的pfile（initorcl.ora）文件重命名为initorcls.ora放置在/u01/oracle_11/app/oracle/product/11.2.0/dbhome_1/dbs/路径下，并使用其手动建库
+#备库使用主库经修改的pfile（initorcl.ora）文件重命名为initorcls.ora放置在/u01/app/oracle/product/11.2.0/dbhome_1/dbs/路径下，并使用其手动建库
 $sqlplus / as sysdba
 
 #指定pfile文件的路径
@@ -316,10 +316,10 @@ SQL>select max(sequence#)from v$archived_log;
 #SQL>show parameter LOG_ARCHIVE_DEST_2
 #SQL>SELECT SWITCHOVER_STATUS FROM V$DATABASE;
 #SQL>select open_mode,database_role,switchover_status from v$database;
-#cp /u01/oracle_11/app/oracle/admin/orcl/pfile/init.ora.* /u01/oracle_11/app/oracle/product/11.2.0/dbhome_1/dbs/
-#mv /u01/oracle_11/app/oracle/product/11.2.0/dbhome_1/dbs/init.ora.* /u01/oracle_11/app/oracle/product/11.2.0/dbhome_1/dbs/initorcl.ora
+#cp /u01/app/oracle/admin/orcl/pfile/init.ora.* /u01/app/oracle/product/11.2.0/dbhome_1/dbs/
+#mv /u01/app/oracle/product/11.2.0/dbhome_1/dbs/init.ora.* /u01/app/oracle/product/11.2.0/dbhome_1/dbs/initorcl.ora
 
 export ORACLE_SID='orcls2'
-startup nomount pfile='/u01/oracle_11/app/oracle/product/11.2.0/dbhome_1/dbs/initorcls2.ora'
+startup nomount pfile='/u01/app/oracle/product/11.2.0/dbhome_1/dbs/initorcls2.ora'
 rman target sys/password@orcl1 auxiliary sys/password@orcls2;
 
